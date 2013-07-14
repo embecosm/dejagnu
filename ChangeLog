@@ -1,3 +1,9 @@
+2014-07-14  Jeremy Bennett <jeremy.bennett@embecosm.com>
+
+	* lib/telnet.exp (telnet_close, telnet_failure_check, telnet_exec)
+	(telnet_spawn_open, telnet_spawn): Created to support use of
+	telnet in running tests on remote targets.
+
 2013-06-17  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
 
 	* runtest.exp (libdirs): New global variable.

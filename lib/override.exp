@@ -1,0 +1,176 @@
+# Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+# 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+#
+# This file is part of DejaGnu.
+#
+# DejaGnu is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# DejaGnu is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with DejaGnu; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
+
+# This file was written by Edward Jones <ed.jones@embecosm.com>.
+
+
+# Variables to hold the override scripts process and spawn ids
+set override_pid 0
+set override_sid 0
+
+# copy of the spawn_id saved whilst interacting with the override script
+set saved_sid 0
+
+
+# Initialize the override script, this then allows the testsuite to query the
+# test manifest and check if a given test has been overridden.
+proc init_override_script { } {
+    global override_manifest
+    global override_sid
+    global override_pid
+
+    # ignore if no manifest present
+    if { ![info exists override_manifest] } {
+	return
+    }
+    if { $override_manifest == "" } {
+	return
+    }
+
+    # save active spawn_id
+    if { [info exists spawn_id] } {
+	set saved_sid $spawn_id
+    } else {
+	# default
+	set saved_sid 0
+    }
+    
+    # only spawn the override script if there is not already one
+    if { $override_sid == 0 } {
+	set override_pid [spawn override_test.py $override_manifest]
+	set override_sid $spawn_id
+	expect "READY"
+    }
+
+    # recover the old spawn_id
+    if { $saved_sid != 0 } {
+	set spawn_id $saved_sid
+    }
+}
+
+
+# Kill the process associated with the override script
+proc finish_override_script { } {
+    global override_manifest
+    global override_sid
+    global override_pid
+
+    # no manifest or override script present
+    if { $override_manifest == "" } {
+	return
+    } elseif { $override_sid == 0 } {
+	return
+    }
+
+    # kill the script process
+    exec kill -12 $override_pid
+
+    set override_sid 0
+}
+
+
+# Query the override script and then handle the override by setting/clearing
+# xfail, or by marking the test as unsupported.
+# Return 1 if the test is unsupported and therefore should not be run.
+proc handle_override { log_str testcase flags subtest line_num } {
+    global compiler_conditional_xfail_data
+    
+    set test_override [query_override_script $testcase $flags $subtest $line_num]
+    switch $test_override {
+	"PASS" {
+	    override_log "$log_str now expected to pass"
+	    if {[info exists compiler_conditional_xfail_data]} {
+		unset compiler_conditional_xfail_data
+	    }
+	    clear_xfail "*-*-*"
+	}
+	"XFAIL" {
+	    override_log "$log_str now expected to fail"
+	    setup_xfail "*-*-*"
+	}
+	"UNSUPPORTED" {
+	    override_log "$log_str now unsupported, skipping it"
+	    unsupported "$log_str"
+	    return 1
+	}
+	default { } # do nothing if it's absent
+    }
+    return 0
+}
+
+
+# Query the override script, this takes various parameters about the test or
+# subtest being run, and then consults the manifest to check whether the
+# test has been overridden. This will call init_override_script if the script
+# has not already been initialized
+#
+# The return is a string representing the override found in the manifest, or
+# "ABSENT" if there is no override
+proc query_override_script { filename flags subtest line_num } {
+    global override_manifest
+    global override_sid
+    global override_pid
+    global spawn_id
+
+    # ignore if no manifest
+    if { ![info exists override_manifest] } {
+	return "ABSENT"
+    }
+    if { $override_manifest == "" } {
+	return "ABSENT"
+    }
+
+    # if manifest has not already been initialized, initialize it.
+    if { $override_sid == 0 } {
+	init_override_script
+    }
+
+    # save the current spawn_id
+    if {[info exists spawn_id]} {
+	set saved_sid $spawn_id
+    } else {
+	set saved_sid 0
+    }
+
+    # send the query to the override script, for now we ignore any errors
+    # when querying
+    set spawn_id $override_sid
+
+    send "\[$filename\] \[$flags\] \[$subtest\] \[$line_num\]\n"
+    expect {
+	"ABSENT"      { set action "ABSENT" }
+	"PASS"        { set action "PASS"   }
+	"XFAIL"       { set action "XFAIL"  }
+	"UNSUPPORTED" { set action "UNSUPPORTED" }
+	"ERROR" { }
+    }
+
+    # recover the spawn_id
+    if { $saved_sid != 0 } {
+	set spawn_id $saved_sid
+    }
+    return $action
+}
+
+
+# Log that an override has taken place.
+proc override_log { message } {
+    send_user "OVERRIDE: ${message}\n"
+}
+

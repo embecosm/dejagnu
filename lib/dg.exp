@@ -154,6 +154,11 @@
 # Global state variables.
 # The defaults are for GCC.
 
+
+# Provides the capability to globally override the expected result of tests
+load_lib override.exp
+
+
 # The default do-what keyword.
 set dg-do-what-default compile
 
@@ -610,6 +615,7 @@ proc dg-test { args } {
     global tool
     global srcdir		;# eg: /calvin/dje/build/gcc/./testsuite/
     global host_triplet target_triplet
+    global compiler_conditional_xfail_data
 
     set keep 0
     set i 0
@@ -649,10 +655,22 @@ proc dg-test { args } {
 	set name "[file tail [file dirname $prog]]/[file tail $prog]"
     }
 
+    # copy the test name, as later it has the tool flags appended to it
+    set base_name $name
+
+    # Do an early query against the override script to check whether this
+    # test file has been marked as unsupported
+    set test_override [query_override_script $base_name $tool_flags "" ""]
+    set override_unsupported 0
+
+    if { $test_override == "UNSUPPORTED" } {
+	set override_unsupported 1
+    }
+
     # We append the compilation flags, if any, to ensure that the test case
     # names are unique.
     if { "$tool_flags" != "" } {
-	set name "$name $tool_flags"
+	set name "$base_name $tool_flags"
     }
 
     # Process any embedded dg options in the testcase.
@@ -709,6 +727,10 @@ proc dg-test { args } {
 	unsupported "$name"
 	verbose "$name not supported on this target, skipping it" 3
 	return
+    } elseif { $override_unsupported == 1 } {
+	override_log "$name now unsupported, skipping it"
+	unsupported "$name"
+	return
     }
 
     # Run the tool and analyze the results.
@@ -749,33 +771,62 @@ proc dg-test { args } {
 	# $line will either be a formatted line number or a number all by
 	# itself.  Delete the formatting.
 	scan $line ${dg-linenum-format} line
-	switch [lindex $i 1] {
-	    "ERROR" {
-		$ok "$name $comment (test for errors, line $line)"
-	    }
-	    "XERROR" {
-		x$ok "$name $comment (test for errors, line $line)"
-	    }
-	    "WARNING" {
-		$ok "$name $comment (test for warnings, line $line)"
-	    }
-	    "XWARNING" {
-		x$ok "$name $comment (test for warnings, line $line)"
-	    }
-	    "BOGUS" {
-		$uhoh "$name $comment (test for bogus messages, line $line)"
-	    }
-	    "XBOGUS" {
-		x$uhoh "$name $comment (test for bogus messages, line $line)"
-	    }
-	    "BUILD" {
-		$uhoh "$name $comment (test for build failure, line $line)"
-	    }
-	    "XBUILD" {
-		x$uhoh "$name $comment (test for build failure, line $line)"
-	    }
-	    "EXEC" { }
+
+	set the_error [lindex $i 1]
+	set test_type [string trimleft $the_error X]
+	verbose "subtest ${line} ${the_error}"
+
+
+	# string representing the subtest type to appear in the log
+	switch $the_error {
+	    "ERROR" -
+	    "XERROR" { set subtest_name "errors" }
+	    "WARNING" -
+	    "XWARNING" { set subtest_name "warnings" }
+	    "BOGUS" -
+	    "XBOGUS" { set subtest_name "bogus messages" }
+	    "BUILD" -
+	    "XBUILD" { set subtest_name "build failure" }
+	    "EXEC" -
 	    "XEXEC" { }
+	}
+
+	set subtest_log_str "$name $comment (test for $subtest_name, line $line)"
+
+	# pass the subtest error/line to the external script to check if it has
+	# been overridden. Handle override
+	set test_override [query_override_script $base_name $tool_flags $subtest_name $line]
+
+	# If an override is present, change the_error to reflect this
+	switch $test_override {
+	    "PASS" {
+		override_log "$subtest_log_str now expected to pass"
+		set the_error $test_type
+	    }
+	    "XFAIL" {
+		override_log "$subtest_log_str now expected to fail"
+		set the_error X$test_type
+	    }
+	    "UNSUPPORTED" {
+		override_log "$subtest_log_str now unsupported"
+		unsupported "$subtest_log_str"
+	    }
+	    default { }
+	}
+
+	if { $test_override != "UNSUPPORTED" } {
+	    switch $the_error {
+		"ERROR" -
+		"WARNING" {   $ok "$subtest_log_str" }
+		"XERROR" -
+	 	"XWARNING" { x$ok "$subtest_log_str" }
+		"BOGUS" -
+		"BUILD" {   $uhoh "$subtest_log_str" }
+		"XBOGUS" -
+		"XBUILD" { x$uhoh "$subtest_log_str" }
+		"EXEC" -
+		"XEXEC" { }
+	    }
 	}
 	#send_user "\nold_dejagnu.exp: comp_output2= :$comp_output:\n\n"
     }
@@ -818,6 +869,12 @@ proc dg-test { args } {
 	if {${dg-excess-errors-flag}} {
 	    setup_xfail "*-*-*"
 	}
+	
+	# Handle override of test for excess errors, early exit on unsupported
+	if { [handle_override "$name (test for excess errors)" $base_name $tool_flags "excess errors" ""] == 1 } {
+	    return
+	}
+
 	if {![string match "" $comp_output]} {
 	    fail "$name (test for excess errors)"
 	    send_log "Excess errors:\n$comp_output\n"
@@ -833,6 +890,11 @@ proc dg-test { args } {
 	if {![file exists $output_file]} {
 	    unresolved "$name compilation failed to produce executable"
 	} else {
+	    # handle override of execution test, early exit if unsupported
+	    if { [handle_override "$name execution" $base_name $tool_flags "execute" ""] == 1 } {
+		return
+	    }
+
 	    set status -1
 	    set result [${tool}_load $output_file]
 	    set status [lindex $result 0]

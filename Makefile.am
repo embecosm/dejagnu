@@ -31,7 +31,7 @@ DISTCLEANFILES = xXx.log xXx.sum x.log x.sum testrun.log testrun.sum
 all-local:
 	@echo "Done. Now run 'make install'."
 
-bin_SCRIPTS = runtest
+bin_SCRIPTS = runtest lib/override_test.py
 include_HEADERS = dejagnu.h
 
 pkgdata_DATA = \
@@ -53,7 +53,8 @@ pkgdata_DATA = \
   lib/targetdb.exp \
   lib/telnet.exp \
   lib/tip.exp \
-  lib/utils.exp
+  lib/utils.exp \
+  lib/override.exp
 
 configdir = $(pkgdatadir)/config
 config_DATA = \

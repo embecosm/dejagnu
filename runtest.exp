@@ -88,6 +88,8 @@ set target_vendor  ""		;# vendor name of the OS or workstation the test are runn
 set target_cpu     ""		;# type of the cpu tests are running on
 set target_alias   ""		;# standard abbreviation of target
 set compiler_flags ""		;# the flags used by the compiler
+set override_manifest ""	;# path of the manifest containing overridden tests
+
 
 #
 # some convenience abbreviations
@@ -397,6 +399,7 @@ proc usage { } {
     send_user "\t--version (-V)\t\tEmit all version numbers\n"
     send_user "\t--xml\[=name\] (-x)\tTurn on XML output generation\n"
     send_user "\t--D\[0-1\]\t\tTcl debugger\n"
+    send_user "\t--override_manifest \[string\] Path to a manifest of overridden tests\n"
     send_user "\tscript.exp\[=arg(s)\]\tRun these tests only\n"
     if { [info exists tool] } {
 	if { [info proc ${tool}_option_help] != "" } {
@@ -445,6 +448,7 @@ for { set i 0 } { $i < $argc } { incr i } {
 	"--n*"  -
 	"--ob*" -
 	"--ou*" -
+	"--ov*" -
 	"--sr*" -
 	"--str*" -
 	"--ta*" -
@@ -509,6 +513,11 @@ for { set i 0 } { $i < $argc } { incr i } {
 	"--to*" {			# (--tool) specify tool name
 	    set tool $optarg
 	    set comm_line_tool $optarg
+	    continue
+	}
+
+	"--override_*" {
+	    set override_manifest $optarg
 	    continue
 	}
 
@@ -1008,6 +1017,7 @@ for { set i 0 } { $i < $argc } { incr i } {
 	"--n*"  -
 	"--ob*" -
 	"--ou*" -
+	"--ov*" -
 	"--sr*" -
 	"--str*" -
 	"--ta*" -
@@ -1169,6 +1179,12 @@ for { set i 0 } { $i < $argc } { incr i } {
 	"--to*" {			# (--tool) specify tool name
 	    set tool $optarg
 	    verbose "Testing $tool"
+	    continue
+	}
+
+	"--override_*" {
+	    set override_manifest $optarg
+	    verbose "Using override manifest $override_manifest"
 	    continue
 	}
 

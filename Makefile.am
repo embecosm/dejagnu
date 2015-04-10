@@ -55,7 +55,8 @@ pkgdata_DATA = \
   lib/targetdb.exp \
   lib/telnet.exp \
   lib/tip.exp \
-  lib/utils.exp
+  lib/utils.exp \
+  lib/override.exp
 
 configdir = $(pkgdatadir)/config
 config_DATA = \

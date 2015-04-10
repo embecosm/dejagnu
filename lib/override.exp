@@ -1,0 +1,65 @@
+# Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+# 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+#
+# This file is part of DejaGnu.
+#
+# DejaGnu is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# DejaGnu is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with DejaGnu; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
+
+# This file was written by Edward Jones <ed.jones@embecosm.com>.
+
+# Query the override manifest and handle the override by setting/clearing
+# xfail, or by marking the test as unsupported.
+#
+# log_str    The string that would normally have been printed out to the
+#            test log
+# test_name  The name of the file being tested
+# flags      Optional flags this test is being run with.
+# subtest    Optional subtest which is being executed
+# line_num   Optional line number the subtest occurs on
+#
+# Return 1 if the test is unsupported and therefore should not be run, otherwise
+# return 0
+proc handle_override { log_str test_name flags subtest line_num } {
+    global compiler_conditional_xfail_data
+
+    set new_result [query_override $test_name $flags $subtest $line_num]
+    switch $new_result {
+	"PASS" {
+	    override_log "$log_str now expected to pass"
+	    if {[info exists compiler_conditional_xfail_data]} {
+		unset compiler_conditional_xfail_data
+	    }
+	    clear_xfail "*-*-*"
+	}
+	"XFAIL" {
+	    override_log "$log_str now expected to fail"
+	    setup_xfail "*-*-*"
+	}
+	"UNSUPPORTED" {
+	    override_log "$log_str now unsupported, skipping it"
+	    unsupported "$log_str"
+	    return 1
+	}
+	default { } # do nothing if it's absent
+    }
+    # By default do nothing
+    return 0
+}
+
+# Log that an override has taken place.
+proc override_log { message } {
+    send_user "OVERRIDE: ${message}\n"
+}
+

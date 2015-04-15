@@ -1,3 +1,34 @@
+2015-04-15  Edward Jones  <ed.jones@embecosm.com>
+
+    Alteration to the below change which changed the directories
+    searched when --directory is provided on the command line. It seems
+    more intuitive that we match against *${directory}  with an
+    implicit wildcard on the left to match relative paths.
+
+    * runtest.exp: Match *${directory}, not $directory when the user
+    passes the --directory option.
+    
+    2014-10-14  Ben Elliston  <bje@gnu.org>
+
+	* runtest.exp: Only match $directory, not *${directory}* when the
+	user passes the --directory option. Reported by Sergey Alyoshin.
+
+2015-04-10  Edward Jones  <ed.jones@embecosm.com>
+
+    Added a global override, which can optionally override the expected
+    result of tests before they are run. Each test override is a separate
+    line in the manifest provided to the runtest command through the
+    '--override_manifest' option.
+
+    * lib/override.exp: New file to handle global override.
+    * lib/override_test.py: New file, used to query the manifest.
+    * lig/dg.exp: Add support for override.
+    * runtest.exp: Support for --override_manifest flag.
+    * Makefile.am: Added lib/override.exp and lib/override_test.py
+    * Makefile.in: Regenerated.
+    * aclocal.m4: Likewise.
+    * configure: Likewise.
+
 2015-03-30  Ben Elliston  <bje@gnu.org>
 
 	Revert the following change which causes breakage reported here:

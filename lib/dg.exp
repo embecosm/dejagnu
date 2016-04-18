@@ -660,7 +660,7 @@ proc dg-test { args } {
 
     # Do an early query against the override script to check whether this
     # test file has been marked as unsupported
-    set test_override [query_override_script $base_name $tool_flags "" ""]
+    set test_override [query_override $base_name $tool_flags "" ""]
     set override_unsupported 0
 
     if { $test_override == "UNSUPPORTED" } {
@@ -795,7 +795,7 @@ proc dg-test { args } {
 
 	# pass the subtest error/line to the external script to check if it has
 	# been overridden. Handle override
-	set test_override [query_override_script $base_name $tool_flags $subtest_name $line]
+	set test_override [query_override $base_name $tool_flags $subtest_name $line]
 
 	# If an override is present, change the_error to reflect this
 	switch $test_override {

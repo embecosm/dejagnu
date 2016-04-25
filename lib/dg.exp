@@ -565,6 +565,7 @@ proc dg-final { args } {
 # It must be run before calling `dg-test'.
 #
 proc dg-init { } {
+    init_override_manifest
 }
 
 # dg-runtest -- simple main loop useful to most testsuites
@@ -985,4 +986,5 @@ proc dg-finish { } {
     if {![string match "" [info procs ${tool}_finish]]} {
 	${tool}_finish
     }
+    finish_override_manifest
 }

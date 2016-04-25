@@ -37,14 +37,16 @@ proc init_override_manifest { } {
     global override_dict
 
     # ignore if no manifest present
-    if { ![info exists override_manifest] } {
+    if { ![info exists override_manifest] || $override_manifest == ""} {
+	verbose "No override manifest specified"
 	return
     }
-    if { $override_manifest == "" || $override_manifest_loaded == 1 } {
+    if { $override_manifest_loaded == 1 } {
+	verbose "Manifest already loaded"
 	return
     }
     # Only load in the manifest if it's not already loaded
-    override_log "Initializing override manifest"
+    verbose "Initializing override manifest $override_manifest"
     set override_dict [load_override_manifest $override_manifest]
     set override_manifest_loaded 1
 }
@@ -58,7 +60,7 @@ proc finish_override_manifest { } {
     if { $override_manifest_loaded == 0 } {
 	return
     }
-    override_log "Uninitializing override manifest"
+    verbose "Uninitializing override manifest"
     set override_manifest_loaded 0
     set override_dict ""
 }
@@ -66,7 +68,7 @@ proc finish_override_manifest { } {
 # Load in an override manifest from the provided file
 proc load_override_manifest { manifest_file } {
     set override_dict ""
-    override_log "Loading override manifest $manifest_file"
+    verbose "Loading override manifest $manifest_file"
 
     set fp [open $manifest_file r]
     while { [gets $fp orig_line] >= 0 } {

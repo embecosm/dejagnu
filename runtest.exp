@@ -71,6 +71,7 @@ set multipass   ""		;# list of passes and var settings
 set errno	"";		;#
 set exit_error  0		;# Toggle for whether to set the exit status
 ;# on Tcl bugs in test case drivers.
+set override_manifest ""	;# path of the manifest containing overridden tests
 #
 # These describe the host and target environments.
 #
@@ -88,7 +89,6 @@ set target_vendor  ""		;# vendor name of the OS or workstation the test are runn
 set target_cpu     ""		;# type of the cpu tests are running on
 set target_alias   ""		;# standard abbreviation of target
 set compiler_flags ""		;# the flags used by the compiler
-set override_manifest ""	;# path of the manifest containing overridden tests
 
 
 #

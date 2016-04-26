@@ -164,6 +164,19 @@ proc load_override_manifest { manifest_file } {
     return $override_dict
 }
 
+# Sort the input list of lists by the length of the sublists
+proc lsort_by_len { args } {
+    set tmp {}
+    foreach element $args {
+	lappend tmp [list [llength $element] $element]
+    }
+    set res {}
+    foreach i [lsort -index 0 $tmp] {
+	lappend res [lindex $i 1]
+    }
+    set res
+}
+
 # Query the override manifest, returning the new expected result for a given
 # test.
 #
@@ -203,7 +216,7 @@ proc query_override { test_name flags subtest line_num } {
     #
     # We sort the entries in length order, so that we match more fine-grained
     # entries before coarser ones.
-    set sorted_entries [lsort -decreasing -command llength $entries]
+    set sorted_entries [lsort_by_len $entries]
 
     for {set i 0} {$i < [llength $sorted_entries]} {incr i} {
 	set entry [lindex $sorted_entries $i]

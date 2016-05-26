@@ -89,9 +89,9 @@ proc load_override_manifest { manifest_file } {
 	set pattern "${pattern}\\s+(\\S+)"
 	# Optional patterns to match the flags, subtest and line number in the
 	# form [field]
-	set pattern "${pattern}(\\s+(\\\[\[^\\\]\]*\\\]))?"
-	set pattern "${pattern}(\\s+(\\\[\[^\\\]\]*\\\]))?"
-	set pattern "${pattern}(\\s+(\\\[\[^\\\]\]*\\\]))?"
+	set pattern "${pattern}(\\s+(\\\[\[^\\\]\]*)\\\])?"
+	set pattern "${pattern}(\\s+(\\\[\[^\\\]\]*)\\\])?"
+	set pattern "${pattern}(\\s+(\\\[\[^\\\]\]*)\\\])?"
 	# Pattern for the remainder of the line (which should be a comment)
 	set pattern "${pattern}.*"
 
@@ -111,8 +111,8 @@ proc load_override_manifest { manifest_file } {
 	    }
 	}
 	if { [string length $subtest] >= 2 } {
-	    set flags [string range $subtest 1 [expr [string length $subtest] - 1]]
-	    set flags [string trim $subtest]
+	    set subtest [string range $subtest 1 [expr [string length $subtest] - 1]]
+	    set subtest [string trim $subtest]
 	    if { $subtest == "" } {
 		override_log "Empty subtest field in line -> $orig_line"
 		return ""
@@ -151,6 +151,16 @@ proc load_override_manifest { manifest_file } {
 
 	# Add this entry to the dictionary
 	set entry [list $new_result]
+	if { $flags != "" } {
+	    lappend entry "$flags"
+	}
+	if { $subtest != "" } {
+	    lappend entry "$subtest"
+	}
+	if { $line_num != "" } {
+	    lappend entry "$line_num"
+	}
+
 	if { [dict exists $override_dict $test_name] == 1 } {
 	    set entries [dict get $override_dict $test_name]
 	    lappend entries $entry
@@ -167,7 +177,7 @@ proc load_override_manifest { manifest_file } {
 # Sort the input list of lists by the length of the sublists
 proc lsort_by_len { args } {
     set tmp {}
-    foreach element $args {
+    foreach element [lindex $args 0] {
 	lappend tmp [list [llength $element] $element]
     }
     set res {}

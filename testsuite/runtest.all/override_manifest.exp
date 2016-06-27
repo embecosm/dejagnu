@@ -1,0 +1,61 @@
+# Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+# 2001, 2002, 2003, 2016 Free Software Foundation, Inc.
+#
+# This file is part of DejaGnu.
+#
+# DejaGnu is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# DejaGnu is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with DejaGnu; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
+
+# This file was written by Graham Markall <graham.markall@embecosm.com>.
+
+load_lib override.exp
+
+# Use our own override_log proc for testing
+
+rename override_log saved_override_log
+
+proc override_log { msg } {
+    global override_log_msg
+    set override_log_msg $msg
+}
+
+# Some lines that are valid when read by read_manifest_line
+
+set valid_lines { "PASS: blah.c \[-flag1\] \[subtest1\] \[34\] # VLA"
+                  "PASS: blah.c \[-flag1\] \[subtest1\] # VLA"
+                  "PASS: blah.c \[-flag1\] # VLA"
+                  "PASS: blah.c # VLA"
+                  "PASS: blah.c"
+                  "FAIL: blah.c" }
+
+set invalid_lines { "PASS blah.c" }
+
+foreach valid_line $valid_lines {
+    set result [read_manifest_line $valid_line]
+    if { [dict get $result match] == 1 } {
+        pass "Valid line ... $valid_line"
+    } {
+        fail "Unexpected invalid line ... $result ... $valid_line"
+    }
+}
+
+foreach invalid_line $invalid_lines {
+    set result [read_manifest_line $invalid_line]
+    set match [dict get $result match]
+    if { [dict get $result match ] == 0 } {
+        pass "Invalid line ... $invalid_line"
+    } {
+        fail "Unexpected valid line ... $invalid_line"
+    }
+}

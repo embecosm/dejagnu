@@ -164,21 +164,20 @@ proc read_override_manifest { manifest_data } {
 
 	# The end of the line should either be empty, or begin with a comment
 	# character.
-	set remainder ""
 	if { $remainder != "" } {
 	    if { [string index $remainder 0] != "#" } {
-		override_log "Malformed entry $orig_line"
+		override_log "Trailing characters in line -> $orig_line"
 		return ""
 	    }
 	}
 
 	# check that the new result is a valid value
-	switch $new_result {
+        switch $new_result {
 	    "PASS" { }
 	    "XFAIL" { }
 	    "UNSUPPORTED" { }
 	    default {
-		override_log "Manifest contains an invalid result $new_result"
+		override_log "Invalid result in line -> $new_result"
 		return ""
 	    }
 	}

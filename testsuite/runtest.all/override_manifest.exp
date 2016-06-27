@@ -120,6 +120,42 @@ if { $result != "" } {
     }
 }
 
+clear_override_log
+
+# Trailing non-comment characters on the end of a line
+
+set trailing_chars { "PASS: blah.c \[-funroll-loops\] \[pr12\] \[33\] err" }
+
+set result [read_override_manifest $trailing_chars]
+if { $result != "" } {
+    fail "Unexpected match of trailing non-comment characters"
+} {
+    if { [string compare -length 19 "Trailing characters" $override_log_msg] == 0 } {
+        pass "Trailing characters rejected"
+    } {
+        fail "Trailing characters should not be accepted"
+    }
+}
+
+clear_override_log
+
+# Invalid new result value
+
+set invalid_new_value { "EXPLODE: bomb.c" }
+
+set result [read_override_manifest $invalid_new_value]
+if { $result != "" } {
+    fail "Unexpected match of invalid new result value"
+} {
+    if { [string compare -length 14 "Invalid result" $override_log_msg] == 0 } {
+        pass "Invalid result rejected"
+    } {
+        fail "Invalid result should not be accepted"
+    }
+}
+
+clear_override_log
+
 # Restore the original override_log proc
 
 unset override_log_msg

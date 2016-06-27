@@ -145,15 +145,15 @@ proc read_override_manifest { manifest_data } {
 	    }
 	}
 	if { [string length $subtest] >= 2 } {
-	    set flags [string range $subtest 1 [expr [string length $subtest] - 1]]
-	    set flags [string trim $subtest]
+	    set subtest [string range $subtest 1 [expr [string length $subtest] - 2]]
+	    set subtest [string trim $subtest]
 	    if { $subtest == "" } {
 		override_log "Empty subtest field in line -> $orig_line"
 		return ""
 	    }
 	}
 	if { [string length $line_num] >= 2 } {
-	    set line_num [string range $line_num 1 [expr [string length $line_num] - 1]]
+	    set line_num [string range $line_num 1 [expr [string length $line_num] - 2]]
 	    set line_num [string trim $line_num]
 	    if { $line_num == "" } {
 		override_log "Empty line number field in line -> $orig_line"

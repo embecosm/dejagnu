@@ -67,11 +67,20 @@ proc finish_override_manifest { } {
 
 # Load in an override manifest from the provided file
 proc load_override_manifest { manifest_file } {
-    set override_dict ""
     verbose "Loading override manifest $manifest_file"
 
     set fp [open $manifest_file r]
-    while { [gets $fp orig_line] >= 0 } {
+    set file_data [read $fp]
+    close $fp
+    set manifest_data [split $file_data "\n"]
+    set override_dict [read_override_manifest $manifest_data]
+    return $override_dict
+}
+
+proc read_override_manifest { manifest_data } {
+    set override_dict ""
+
+    foreach orig_line $manifest_data {
 	# trim the line down
 	set new_line [string trim $orig_line]
 
@@ -93,7 +102,7 @@ proc load_override_manifest { manifest_file } {
 	set pattern "${pattern}(\\s+(\\\[\[^\\\]\]*\\\]))?"
 	set pattern "${pattern}(\\s+(\\\[\[^\\\]\]*\\\]))?"
 	# Pattern for the remainder of the line (which should be a comment)
-	set pattern "${pattern}.*"
+	set pattern "${pattern}(\\s+(.*))?"
 
 	set match [regexp $pattern $new_line x new_result test_name x flags x subtest dummy line_num remainder]
 	if { $match == 0 } {

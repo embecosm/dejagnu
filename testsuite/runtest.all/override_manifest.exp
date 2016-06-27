@@ -27,8 +27,15 @@ rename override_log saved_override_log
 
 proc override_log { msg } {
     global override_log_msg
-    set override_log_msg $msg
+    set override_log_msg [concat $override_log_msg $msg]
 }
+
+proc clear_override_log { } {
+    global override_log_msg
+    set override_log_msg ""
+}
+
+clear_override_log
 
 # Some lines that are valid when read by read_manifest_line
 
@@ -57,5 +64,22 @@ foreach invalid_line $invalid_lines {
         pass "Invalid line ... $invalid_line"
     } {
         fail "Unexpected valid line ... $invalid_line"
+    }
+}
+
+clear_override_log
+
+# Bad inputs that should be disallowed by read_override_manifest
+
+set empty_flags { "PASS: blah.c \[\]" }
+
+set result [read_override_manifest $empty_flags]
+if { $result != "" } {
+    fail "Unexpected match of empty flags"
+} {
+    if { [string compare -length 10 "Empty flag" $override_log_msg] == 0 } {
+        pass "Empty flags rejected"
+    } {
+        fail "Empty flags should not be accepted"
     }
 }

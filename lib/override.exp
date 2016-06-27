@@ -137,7 +137,7 @@ proc read_override_manifest { manifest_data } {
 
 	# Empty fields aren't allowed
 	if { [string length $flags] >= 2 } {
-	    set flags [string range $flags 1 [expr [string length $flags] - 1]]
+	    set flags [string range $flags 1 [expr [string length $flags] - 2]]
 	    set flags [string trim $flags]
 	    if { $flags == "" } {
 		override_log "Empty flag field in line -> $orig_line"

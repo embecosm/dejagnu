@@ -135,6 +135,21 @@ proc read_override_manifest { manifest_data } {
 	    return ""
 	}
 
+        if { [string length $flags] >= 2 } {
+            set flags [string range $flags 1 [expr [string length $flags] - 2]]
+            set flags [string trim $flags]
+        }
+
+        if { [string length $subtest] >= 2 } {
+            set subtest [string range $subtest 1 [expr [string length $subtest] - 2]]
+            set subtest [string trim $subtest]
+        }
+
+        if { [string length $line_num] >= 2 } {
+            set line_num [string range $line_num 1 [expr [string length $line_num] - 2]]
+            set line_num [string trim $line_num]
+        }
+
 	# The end of the line should either be empty, or begin with a comment
 	# character.
         set remainder [string trim $remainder]

@@ -40,7 +40,7 @@ clear_override_log
 # Some lines that are valid when read by read_manifest_line
 
 set valid_lines { "PASS: blah.c \[-flag1\] \[subtest1\] \[34\] # VLA"
-                  "PASS: blah.c \[-flag2\] \[subtest1\] # VLA"
+                  "PASS: blah.c \[-flag2\] \[subtest2\] # VLA"
                   "PASS: blah.c \[-flag3\] # VLA"
                   "XFAIL: blah.c # VLA"
                   "UNSUPPORTED: blah2.c"
@@ -72,15 +72,24 @@ clear_override_log
 # Check that the valid lines are correctly read into the override dict
 
 set override_dict [read_override_manifest $valid_lines]
-# Entries for blah.c
-#set entry [dict get $override_dict "blah.c"]
-#if { [llength $entry] == 4 } {
-#    pass "Correct number of entries in override dict"
-#} {
-#    fail "Incorrect number of entries in override dict"
-#}
+set k [dict keys $override_dict]
+puts "keys $k"
 
-#set expected_entries { {PASS -flag1 subtest1 34} {PASS -flag2 subtest1} {PASS -flag3} XFAIL}
+if { [llength [dict keys $override_dict]] == 6 } {
+    pass "Correct number of entries in override dict"
+} {
+    fail "Incorrect number of entries in override dict"
+}
+
+set pass_keys { {blah.c,-flag1,subtest1,34} {blah.c,-flag2,subtest2,} {blah.c,-flag3,,} {blah3.c,,,} }
+foreach key $pass_keys {
+    if { [dict get $pass_keys $key] == "PASS" } {
+        pass "Expected pass in dict"
+    } {
+        fail "Expected pass in is something else in dict"
+    }
+}
+
 #for {set i 0} {$i < 5} {incr i} {
 #    set actual_entry [lindex $entry $i]
 #    set expected_entry [lindex $expected_entries $i]
@@ -90,8 +99,8 @@ set override_dict [read_override_manifest $valid_lines]
 #        fail "Override dict entry does not match"
 #    }
 #}
-
-# Entry for blah2.c
+#
+## Entry for blah2.c
 #set entry [dict get $override_dict "blah2.c"]
 #if { [llength $entry] == 1 } {
 #    pass "Correct number of entries in override dict"
@@ -99,13 +108,13 @@ set override_dict [read_override_manifest $valid_lines]
 #    fail "Incorrect number of entries in override dict"
 #}
 
-#set actual_entry [lindex $entry $i]
-#set expected_entry [lindex $expected_entries $i]
-#if { $actual_entry == $expected_entry } {
-#    pass "Override dict entry matches"
-#} {
-#    fail "Override dict entry does not match"
-#}
+set actual_entry [lindex $entry $i]
+set expected_entry [lindex $expected_entries $i]
+if { $actual_entry == $expected_entry } {
+    pass "Override dict entry matches"
+} {
+    fail "Override dict entry does not match"
+}
 
 puts $override_log_msg
 

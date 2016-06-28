@@ -135,35 +135,9 @@ proc read_override_manifest { manifest_data } {
 	    return ""
 	}
 
-	# Empty fields aren't allowed
-	if { [string length $flags] >= 2 } {
-	    set flags [string range $flags 1 [expr [string length $flags] - 2]]
-	    set flags [string trim $flags]
-	    if { $flags == "" } {
-		override_log "Empty flag field in line -> $orig_line"
-		return ""
-	    }
-	}
-	if { [string length $subtest] >= 2 } {
-	    set subtest [string range $subtest 1 [expr [string length $subtest] - 2]]
-	    set subtest [string trim $subtest]
-	    if { $subtest == "" } {
-		override_log "Empty subtest field in line -> $orig_line"
-		return ""
-	    }
-	}
-	if { [string length $line_num] >= 2 } {
-	    set line_num [string range $line_num 1 [expr [string length $line_num] - 2]]
-	    set line_num [string trim $line_num]
-	    if { $line_num == "" } {
-		override_log "Empty line number field in line -> $orig_line"
-		return ""
-	    }
-	}
-	set remainder [string trim $remainder]
-
 	# The end of the line should either be empty, or begin with a comment
 	# character.
+        set remainder [string trim $remainder]
 	if { $remainder != "" } {
 	    if { [string index $remainder 0] != "#" } {
 		override_log "Trailing characters in line -> $orig_line"
@@ -183,41 +157,12 @@ proc read_override_manifest { manifest_data } {
 	}
 
 	# Create an entry and add it to the dictionary
-	set entry [list $new_result]
-        if { $flags != "" } {
-            lappend entry $flags
-        }
-        if { $subtest != "" } {
-            lappend entry $subtest
-        }
-        if { $line_num != "" } {
-            lappend entry $line_num
-        }
-	if { [dict exists $override_dict $test_name] == 1 } {
-	    set entries [dict get $override_dict $test_name]
-	    lappend entries $entry
-	    dict set override_dict $test_name $entries
-	} else {
-	    set entries [list $entry]
-	    dict set override_dict $test_name $entries
-	}
+        set key "$test_name,$flags,$subtest,$line_num"
+        dict set override_dict $key $new_result
     }
 
     # Return the loaded dictionary
     return $override_dict
-}
-
-# Sort the input list of lists by the length of the sublists
-proc lsort_by_len { args } {
-    set tmp {}
-    foreach element $args {
-	lappend tmp [list [llength $element] $element]
-    }
-    set res {}
-    foreach i [lsort -index 0 $tmp] {
-	lappend res [lindex $i 1]
-    }
-    set res
 }
 
 # Query the override manifest, returning the new expected result for a given
@@ -246,73 +191,23 @@ proc query_override { test_name flags subtest line_num } {
     set subtest   [string trim $subtest]
     set line_num  [string trim $line_num]
 
-    # Look up the manifest entries for the given test name. If there's no
-    # entry then do nothing
-    if { [dict exists $override_dict $test_name] == 1 } {
-	set entries [dict get $override_dict $test_name]
-    } else {
-	return "ABSENT"
+    set keys {}
+    lappend keys "$test_name,$flags,$subtest,$line_num"
+    lappend keys "$test_name,$flags,$subtest,"
+    lappend keys "$test_name,$flags,,$line_num"
+    lappend keys "$test_name,$flags,,"
+    lappend keys "$test_name,,$subtest,$line_num"
+    lappend keys "$test_name,,$subtest,"
+    lappend keys "$test_name,,,$line_num"
+    lappend keys "$test_name,,,"
+
+    foreach key $keys {
+        if { [dict exists $override_dict $key] } {
+            return [dict get $override_dict $key ]
+        }
     }
 
-    # Each entry for a given test name contains a number of fields.
-    #   new_result [flags_regexp [subtests_regexp [line]]]
-    #
-    # We sort the entries in length order, so that we match more fine-grained
-    # entries before coarser ones.
-    set sorted_entries [lsort_by_len $entries]
-
-    for {set i 0} {$i < [llength $sorted_entries]} {incr i} {
-	set entry [lindex $sorted_entries $i]
-
-	# assume that this entry is a match until proven otherwise
-	set match 1
-	set new_result [lindex $entry 0]
-
-	# check that the new_result is a valid value
-	switch $new_result {
-	    "PASS" { }
-	    "XFAIL" { }
-	    "UNSUPPORTED" { }
-	    default {
-		# should never reach here
-		return "ABSENT"
-	    }
-	}
-
-	# check if the flag pattern matches
-	if { $match == 1 && [llength $entry] > 1 && $flags != "" } {
-	    set flags_pattern [lindex $entry 1]
-
-	    # replace runs of whitespace with \S+ in the pattern
-	    set flags_pattern [regexp -all -inline "\S+" $flags_pattern]
-	    set flags_pattern [join $flags_pattern "\\S+"]
-
-	    # test against the regexp, and use it to update the match
-	    set match [regexp $flags_pattern $flags]
-	}
-	# check the subtest pattern
-	if { $match == 1 && [llength $entry] > 2 && $subtest != "" } {
-	    set subtest_pattern [lindex $entry 2]
-
-	    # replace runs of whitespace with \S+ in the pattern
-	    set subtest_pattern [regexp -all -inline "\S+" $flags_pattern]
-	    set subtest_pattern [join $subtest_pattern "\\S+"]
-
-	    # test against the pattern, update match
-	    set match [regexp $subtest_pattern $subtest]
-	}
-	# check the line number if we have one
-	if { $match == 1 && [llength $entry] > 3 && $line_num != "" } {
-	    if { [lindex $entry 3] != $line_num } {
-		set match 0
-	    }
-	}
-
-	if { $match == 1 } {
-	    return $new_result
-	}
-    }
-    # By default do nothing
+    # Nothing found - must be absent
     return "ABSENT"
 }
 

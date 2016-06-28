@@ -39,14 +39,14 @@ clear_override_log
 
 # Some lines that are valid when read by read_manifest_line
 
-set valid_lines { "PASS: blah.c \[-flag1\] \[subtest1\] \[34\] # VLA"
-                  "PASS: blah.c \[-flag2\] \[subtest2\] # VLA"
-                  "PASS: blah.c \[-flag3\] # VLA"
-                  "XFAIL: blah.c # VLA"
-                  "UNSUPPORTED: blah2.c"
-                  "PASS: blah3.c" }
+set valid_lines { "PASS: \[blah.c\] \[-flag1\] \[subtest1\] \[34\] # VLA"
+                  "PASS: \[blah.c\] \[-flag2\] \[subtest2\] # VLA"
+                  "PASS: \[blah.c\] \[-flag3\] # VLA"
+                  "XFAIL: \[blah.c\] # VLA"
+                  "UNSUPPORTED: \[blah2.c\]"
+                  "PASS: \[blah3.c\]" }
 
-set invalid_lines { "PASS blah.c" }
+set invalid_lines { "PASS \[blah.c\]"  }
 
 foreach valid_line $valid_lines {
     set result [read_manifest_line $valid_line]
@@ -165,7 +165,7 @@ clear_override_log
 
 # Invalid new result value
 
-set invalid_new_value { "EXPLODE: bomb.c" }
+set invalid_new_value { "EXPLODE: [bomb.c]" }
 
 set result [read_override_manifest $invalid_new_value]
 if { $result != "" } {

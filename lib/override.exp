@@ -68,18 +68,16 @@ proc finish_override_manifest { } {
 proc read_manifest_line { manifest_line } {
     # The expected result - e.g. "FAIL:", "PASS:", etc.
     set expected "^(\\S+):"
-    # The test name follows, separated from the expected result by whitespace
-    set test_name "\\s+(\\S+)"
-    # Optional patterns to match the flags, subtest and line number in the
-    # form [field]
+    # Optional patterns to match the test name, flags, subtest and line number
+    # in the form [field]
     set optional "(\\s+(\\\[\[^\\\]\]*\\\]))?"
-    set optionals "${optional}${optional}${optional}"
+    set optionals "${optional}${optional}${optional}${optional}"
     # Pattern for the remainder of the line (which should be a comment)
     set remainder "(\\s+(.*))?"
     # The whole line
-    set manifest_line_pattern "${expected}${test_name}${optionals}${remainder}"
+    set manifest_line_pattern "${expected}${optionals}${remainder}"
 
-    set match [regexp $manifest_line_pattern $manifest_line x new_result test_name x flags x subtest x line_num remainder]
+    set match [regexp $manifest_line_pattern $manifest_line x new_result test_name x flags x subtest x line_num x remainder]
 
     set result [dict create match $match]
     if { $match == 0 } {
@@ -87,12 +85,12 @@ proc read_manifest_line { manifest_line } {
         return $result
     }
 
-    dict set result new_result $new_result
-    dict set result test_name $test_name
-    dict set result flags $flags
-    dict set result subtest $subtest
-    dict set result line_num $line_num
-    dict set result remainder $remainder
+    dict set result new_result [string trim $new_result]
+    dict set result test_name [string trim $test_name]
+    dict set result flags [string trim $flags]
+    dict set result subtest [string trim $subtest]
+    dict set result line_num [string trim $line_num]
+    dict set result remainder [string trim $remainder]
     return $result
 }
 
@@ -135,6 +133,11 @@ proc read_override_manifest { manifest_data } {
 	    return ""
 	}
 
+        if { [string length $test_name] >= 2 } {
+            set test_name [string range $test_name 1 [expr [string length $test_name] - 2]]
+            set test_name [string trim $test_name]
+        }
+
         if { [string length $flags] >= 2 } {
             set flags [string range $flags 1 [expr [string length $flags] - 2]]
             set flags [string trim $flags]
@@ -159,6 +162,14 @@ proc read_override_manifest { manifest_data } {
 		return ""
 	    }
 	}
+
+        # We can't have a completely wild set of values for the test.
+        # (Also line number only is not allowed, because that makes
+        # very little sense)
+        if { $test_name == "" && $flags == "" && $subtest == "" } {
+            override_log "Can't have wildcard name, test, and flags"
+            return ""
+        }
 
 	# check that the new result is a valid value
         switch $new_result {

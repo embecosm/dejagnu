@@ -182,8 +182,17 @@ proc read_override_manifest { manifest_data } {
 	    }
 	}
 
-	# Add this entry to the dictionary
+	# Create an entry and add it to the dictionary
 	set entry [list $new_result]
+        if { $flags != "" } {
+            lappend entry $flags
+        }
+        if { $subtest != "" } {
+            lappend entry $subtest
+        }
+        if { $line_num != "" } {
+            lappend entry $line_num
+        }
 	if { [dict exists $override_dict $test_name] == 1 } {
 	    set entries [dict get $override_dict $test_name]
 	    lappend entries $entry
@@ -193,6 +202,7 @@ proc read_override_manifest { manifest_data } {
 	    dict set override_dict $test_name $entries
 	}
     }
+
     # Return the loaded dictionary
     return $override_dict
 }

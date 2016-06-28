@@ -43,8 +43,8 @@ set valid_lines { "PASS: blah.c \[-flag1\] \[subtest1\] \[34\] # VLA"
                   "PASS: blah.c \[-flag1\] \[subtest1\] # VLA"
                   "PASS: blah.c \[-flag1\] # VLA"
                   "PASS: blah.c # VLA"
-                  "PASS: blah.c"
-                  "FAIL: blah.c" }
+                  "UNSUPPORTED: blah2.c"
+                  "XFAIL: blah.c" }
 
 set invalid_lines { "PASS blah.c" }
 
@@ -68,6 +68,59 @@ foreach invalid_line $invalid_lines {
 }
 
 clear_override_log
+
+# Check that the valid lines are correctly read into the override dict
+
+set override_dict [read_override_manifest $valid_lines]
+
+# Entries for blah.c
+set entry [dict get $override_dict "blah.c"]
+if { [llength $entry] == 5 } {
+    pass "Correct number of entries in override dict"
+} {
+    fail "Incorrect number of entries in override dict"
+}
+
+set expected_entries { {PASS -flag1 subtest1 34} {PASS -flag1 subtest1} {PASS -flag1} PASS XFAIL}
+for {set i 0} {$i < 5} {incr i} {
+    set actual_entry [lindex $entry $i]
+    set expected_entry [lindex $expected_entries $i]
+    if { $actual_entry == $expected_entry } {
+        pass "Override dict entry matches"
+    } {
+        fail "Override dict entry does not match"
+    }
+}
+
+# Entry for blah2.c
+set entry [dict get $override_dict "blah2.c"]
+if { [llength $entry] == 1 } {
+    pass "Correct number of entries in override dict"
+} {
+    fail "Incorrect number of entries in override dict"
+}
+
+set actual_entry [lindex $entry $i]
+set expected_entry [lindex $expected_entries $i]
+if { $actual_entry == $expected_entry } {
+    pass "Override dict entry matches"
+} {
+    fail "Override dict entry does not match"
+}
+
+clear_override_log
+
+# Check that querying the override log provides the correct results
+
+# Ensure preconditions are met - signal that the override manifest is loaded:
+set override_manifest_loaded 1
+
+# Things not in the override dict should be absent
+if { [query_override "blah3.c" "" "" ""] == "ABSENT" } {
+    pass "Files not in override dict are absent"
+} {
+    fail "Files not in override dict should be absent"
+}
 
 # Bad inputs that should be disallowed by read_override_manifest
 

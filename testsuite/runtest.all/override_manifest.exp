@@ -72,8 +72,6 @@ clear_override_log
 # Check that the valid lines are correctly read into the override dict
 
 set override_dict [read_override_manifest $valid_lines]
-set k [dict keys $override_dict]
-puts "keys $k"
 
 if { [llength [dict keys $override_dict]] == 6 } {
     pass "Correct number of entries in override dict"
@@ -83,44 +81,28 @@ if { [llength [dict keys $override_dict]] == 6 } {
 
 set pass_keys { {blah.c,-flag1,subtest1,34} {blah.c,-flag2,subtest2,} {blah.c,-flag3,,} {blah3.c,,,} }
 foreach key $pass_keys {
-    if { [dict get $pass_keys $key] == "PASS" } {
+    if { [dict get $override_dict $key] == "PASS" } {
         pass "Expected pass in dict"
     } {
         fail "Expected pass in is something else in dict"
     }
 }
 
-#for {set i 0} {$i < 5} {incr i} {
-#    set actual_entry [lindex $entry $i]
-#    set expected_entry [lindex $expected_entries $i]
-#    if { $actual_entry == $expected_entry } {
-#        pass "Override dict entry matches"
-#    } {
-#        fail "Override dict entry does not match"
-#    }
-#}
-#
-## Entry for blah2.c
-#set entry [dict get $override_dict "blah2.c"]
-#if { [llength $entry] == 1 } {
-#    pass "Correct number of entries in override dict"
-#} {
-#    fail "Incorrect number of entries in override dict"
-#}
-
-set actual_entry [lindex $entry $i]
-set expected_entry [lindex $expected_entries $i]
-if { $actual_entry == $expected_entry } {
-    pass "Override dict entry matches"
+if { [dict get $override_dict "blah.c,,,"] == "XFAIL" } {
+    pass "Expected XFAIL for blah.c"
 } {
-    fail "Override dict entry does not match"
+    fail "Expected XFAIL for blah.c not obtained"
 }
 
-puts $override_log_msg
+if { [dict get $override_dict "blah2.c,,,"] == "UNSUPPORTED" } {
+    pass "Expected UNSUPPORTED for blah2.c"
+} {
+    fail "Expected UNSUPPORTED for blah2.c not obtained"
+}
 
 clear_override_log
 
-# Check that querying the override log provides the correct results
+# Check that querying the override provides the correct results
 
 # Ensure preconditions are met - signal that the override manifest is loaded:
 set override_manifest_loaded 1

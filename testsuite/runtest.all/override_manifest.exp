@@ -137,60 +137,6 @@ if { [query_override "blah.c" "" "" ""] == "XFAIL" } {
     fail "Expected to fail test did not return XFAIL"
 }
 
-
-# Bad inputs that should be disallowed by read_override_manifest
-
-# Empty flags field
-
-set empty_flags { "PASS: blah.c \[\]" }
-
-set result [read_override_manifest $empty_flags]
-if { $result != "" } {
-    fail "Unexpected match of empty flags"
-} {
-    if { [string compare -length 10 "Empty flag" $override_log_msg] == 0 } {
-        pass "Empty flags rejected"
-    } {
-        fail "Empty flags should not be accepted"
-    }
-}
-
-clear_override_log
-
-# Empty subtest field
-
-set empty_subtest { "PASS: blah.c \[-funroll-loops\] \[\]" }
-
-set result [read_override_manifest $empty_subtest]
-if { $result != "" } {
-    fail "Unexpected match of empty subtest"
-} {
-    if { [string compare -length 13 "Empty subtest" $override_log_msg] == 0 } {
-        pass "Empty subtest rejected"
-    } {
-        fail "Empty subtest should not be accepted"
-    }
-}
-
-clear_override_log
-
-# Empty line number field
-
-set empty_line_num { "PASS: blah.c \[-funroll-loops\] \[pr12\] \[\]" }
-
-set result [read_override_manifest $empty_line_num]
-if { $result != "" } {
-    fail "Unexpected match of empty line number"
-} {
-    if { [string compare -length 17 "Empty line number" $override_log_msg] == 0 } {
-        pass "Empty line number rejected"
-    } {
-        fail "Empty line number should not be accepted"
-    }
-}
-
-clear_override_log
-
 # Trailing non-comment characters on the end of a line
 
 set trailing_chars { "PASS: blah.c \[-funroll-loops\] \[pr12\] \[33\] err" }

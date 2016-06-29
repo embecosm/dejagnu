@@ -44,7 +44,8 @@ set valid_lines { "PASS: \[blah.c\] \[-flag1\] \[subtest1\] \[34\] # VLA"
                   "PASS: \[blah.c\] \[-flag3\] # VLA"
                   "XFAIL: \[blah.c\] # VLA"
                   "UNSUPPORTED: \[blah2.c\]"
-                  "PASS: \[blah3.c\]" }
+                  "PASS: \[blah3.c\]"
+                  "UNSUPPORTED: \[\] \[-flto\]"}
 
 set invalid_lines { "PASS \[blah.c\]"  }
 
@@ -73,13 +74,16 @@ clear_override_log
 
 set override_dict [read_override_manifest $valid_lines]
 
-if { [llength [dict keys $override_dict]] == 6 } {
+if { [llength [dict keys $override_dict]] == 7 } {
     pass "Correct number of entries in override dict"
 } {
     fail "Incorrect number of entries in override dict"
 }
 
-set pass_keys { {blah.c,-flag1,subtest1,34} {blah.c,-flag2,subtest2,} {blah.c,-flag3,,} {blah3.c,,,} }
+set pass_keys { {blah.c,-flag1,subtest1,34}
+                {blah.c,-flag2,subtest2,}
+                {blah.c,-flag3,,}
+                {blah3.c,,,} }
 foreach key $pass_keys {
     if { [dict get $override_dict $key] == "PASS" } {
         pass "Expected pass in dict"
@@ -98,6 +102,12 @@ if { [dict get $override_dict "blah2.c,,,"] == "UNSUPPORTED" } {
     pass "Expected UNSUPPORTED for blah2.c"
 } {
     fail "Expected UNSUPPORTED for blah2.c not obtained"
+}
+
+if { [dict get $override_dict ",-flto,,"] == "UNSUPPORTED" } {
+    pass "Expected UNSUPPORTED for -flto"
+} {
+    fail "Expected UNSUPPORTED for -flto not obtained"
 }
 
 clear_override_log

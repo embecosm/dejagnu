@@ -71,7 +71,6 @@ set multipass   ""		;# list of passes and var settings
 set errno	"";		;#
 set exit_error  0		;# Toggle for whether to set the exit status
 ;# on Tcl bugs in test case drivers.
-set override_manifest ""	;# path of the manifest containing overridden tests
 #
 # These describe the host and target environments.
 #
@@ -399,7 +398,6 @@ proc usage { } {
     send_user "\t--version (-V)\t\tEmit all version numbers\n"
     send_user "\t--xml\[=name\] (-x)\tTurn on XML output generation\n"
     send_user "\t--D\[0-1\]\t\tTcl debugger\n"
-    send_user "\t--override_manifest \[string\] Path to a manifest of overridden tests\n"
     send_user "\tscript.exp\[=arg(s)\]\tRun these tests only\n"
     if { [info exists tool] } {
 	if { [info proc ${tool}_option_help] != "" } {
@@ -448,7 +446,6 @@ for { set i 0 } { $i < $argc } { incr i } {
 	"--n*"  -
 	"--ob*" -
 	"--ou*" -
-	"--ov*" -
 	"--sr*" -
 	"--str*" -
 	"--ta*" -
@@ -513,11 +510,6 @@ for { set i 0 } { $i < $argc } { incr i } {
 	"--to*" {			# (--tool) specify tool name
 	    set tool $optarg
 	    set comm_line_tool $optarg
-	    continue
-	}
-
-	"--override_*" {
-	    set override_manifest $optarg
 	    continue
 	}
 
@@ -1017,7 +1009,6 @@ for { set i 0 } { $i < $argc } { incr i } {
 	"--n*"  -
 	"--ob*" -
 	"--ou*" -
-	"--ov*" -
 	"--sr*" -
 	"--str*" -
 	"--ta*" -
@@ -1179,12 +1170,6 @@ for { set i 0 } { $i < $argc } { incr i } {
 	"--to*" {			# (--tool) specify tool name
 	    set tool $optarg
 	    verbose "Testing $tool"
-	    continue
-	}
-
-	"--override_*" {
-	    set override_manifest $optarg
-	    verbose "Using override manifest $override_manifest"
 	    continue
 	}
 

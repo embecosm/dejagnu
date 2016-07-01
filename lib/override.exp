@@ -19,6 +19,12 @@
 
 # This file was written by Edward Jones <ed.jones@embecosm.com>.
 
+# If there is a specific override initialisation function in site.exp,
+# call it now.
+if { [llength [info procs initialize_override]] > 0 } {
+    initialize_override
+}
+
 # Query the override manifest and handle the override by setting/clearing
 # xfail, or by marking the test as unsupported.
 #

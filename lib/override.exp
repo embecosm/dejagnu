@@ -37,10 +37,10 @@ if { [llength [info procs initialize_override]] > 0 } {
 #
 # Return 1 if the test is unsupported and therefore should not be run, otherwise
 # return 0
-proc handle_override { log_str test_name flags subtest line_num } {
+proc handle_override { log_str test_name flags extra_flags subtest line_num } {
     global compiler_conditional_xfail_data
 
-    set new_result [query_override $test_name $flags $subtest $line_num]
+    set new_result [query_override $test_name $flags $extra_flags $subtest $line_num]
     switch $new_result {
 	"PASS" {
 	    override_log "$log_str now expected to pass"
